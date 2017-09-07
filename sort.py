@@ -62,6 +62,12 @@ def find_list(APIKEY, TOKEN):
 
 
 def sort_list(selected_list, APIKEY, TOKEN):
+    """
+    Sort the trello list using a bubble-sort like technique.
+
+    We use Python's sort method to sort the cards, but we must iterate through
+    them, pushing each one to the top of the list to sort
+    """
     for card in sorted(selected_list, key=lambda card: card['due']):
         print(card['name'])
         url = "https://api.trello.com/1/cards/{}/pos?key={}&token={}".format(
