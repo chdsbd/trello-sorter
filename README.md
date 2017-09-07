@@ -21,3 +21,8 @@ optional arguments:
                  "ECE112"
   -n, --no-sort  Disable sorting
 ```
+
+## Why are you using Python 2?
+The official [python trello api wrapper][0] is Python 2 only.
+
+[0]: https://pypi.python.org/pypi/trello
