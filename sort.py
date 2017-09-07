@@ -4,15 +4,41 @@
 from __future__ import print_function
 
 import argparse
+import re
 
 import requests
 import trello
+
+REGEX = r"[a-zA-Z]{3}\s{0,1}\d{3}"
+LABEL_COLORS = [
+    'green',
+    'purple',
+    'blue',
+    'orange',
+    'lime',
+    'red',
+    'yellow',
+    'pink']
+
+EXAM_COLOR = 'pink'
+
+EXAM_NAMES = ['exam', 'test', 'quiz', 'final', 'midterm', 'mid-term']
 
 
 def main():
     parser = argparse.ArgumentParser(
         description='Interactive command line utility for sorting Trello lists')
     parser.add_argument('apikey', help='Trello API Key from https://trello.com/app-key')
+    parser.add_argument(
+        '-l',
+        '--label',
+        action='store_true',
+        help='label the cards based on classes using format "ECE 112:" or "ECE112"')
+    parser.add_argument(
+        '-n',
+        '--no-sort',
+        action='store_true',
+        help='Disable sorting')
     args = parser.parse_args()
 
     APIKEY = args.apikey
@@ -23,7 +49,10 @@ def main():
     TOKEN = raw_input('App token: ')
 
     selected_list = find_list(APIKEY, TOKEN)
-    sort_list(selected_list, APIKEY, TOKEN)
+    if not args.no_sort:
+        sort_list(selected_list, APIKEY, TOKEN)
+    if args.label:
+        label_cards(selected_list, APIKEY, TOKEN)
 
 
 def find_list(APIKEY, TOKEN):
@@ -76,6 +105,27 @@ def sort_list(selected_list, APIKEY, TOKEN):
         if r.status_code != 200:
             print(u"ERRORS for card with NAME: {}, ID: {}".format(card['name'],
                                                                   card['id']))
+
+
+def label_cards(selected_list, APIKEY, TOKEN):
+    cards = trello.Cards(APIKEY, token=TOKEN)
+    p = re.compile(REGEX)
+    class_names = set()
+    # remove previous labels from cards
+    print('Labeling cards')
+    for card in selected_list:
+        for card_label in card['labels']:
+            cards.delete_label_color(card_label['color'], card['id'])
+        class_name = p.search(card['name']).group().replace(' ', '')
+        class_names.add(class_name)
+        class_name_index = list(class_names).index(class_name)
+        label_color = LABEL_COLORS[class_name_index]
+        cards.new_label(card['id'], label_color)
+
+        if any(s in card['name'].lower() for s in EXAM_NAMES):
+            cards.new_label(card['id'], EXAM_COLOR)
+
+        print(card['name'])
 
 
 if __name__ == '__main__':
