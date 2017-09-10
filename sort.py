@@ -110,15 +110,17 @@ def sort_list(selected_list, APIKEY, TOKEN):
 def label_cards(selected_list, APIKEY, TOKEN):
     cards = trello.Cards(APIKEY, token=TOKEN)
     p = re.compile(REGEX)
-    class_names = set()
+    class_names = []
     # remove previous labels from cards
     print('Labeling cards')
     for card in selected_list:
         for card_label in card['labels']:
             cards.delete_label_color(card_label['color'], card['id'])
         class_name = p.search(card['name']).group().replace(' ', '')
-        class_names.add(class_name)
-        class_name_index = list(class_names).index(class_name)
+
+        if class_name not in class_names:
+            class_names.append(class_name)
+        class_name_index = class_names.index(class_name)
         label_color = LABEL_COLORS[class_name_index]
         cards.new_label(card['id'], label_color)
 
