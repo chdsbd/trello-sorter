@@ -4,10 +4,25 @@
 from __future__ import print_function
 
 import argparse
+import logging
+import logging.config
 import re
 
 import requests
 import trello
+
+
+DEFAULT_LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'loggers': {
+        '': {
+            'level': 'INFO',
+        },
+    }
+}
+
+logging.config.dictConfig(DEFAULT_LOGGING)
 
 REGEX = r"[a-zA-Z]{3}\s{0,1}\d{3}"
 LABEL_COLORS = [
@@ -98,12 +113,12 @@ def sort_list(selected_list, APIKEY, TOKEN):
     them, pushing each one to the top of the list to sort
     """
     for card in sorted(selected_list, key=lambda card: card['due']):
-        print(card['name'])
+        logging.info(card['name'])
         url = "https://api.trello.com/1/cards/{}/pos?key={}&token={}".format(
             card['id'], APIKEY, TOKEN)
         r = requests.put(url, data={'value': 'bottom'})
         if r.status_code != 200:
-            print(u"ERRORS for card with NAME: {}, ID: {}".format(card['name'],
+            logging.warning(u"ERRORS for card with NAME: {}, ID: {}".format(card['name'],
                                                                   card['id']))
 
 
@@ -112,7 +127,7 @@ def label_cards(selected_list, APIKEY, TOKEN):
     p = re.compile(REGEX)
     class_names = []
     # remove previous labels from cards
-    print('Labeling cards')
+    logging.info('Labeling cards')
     for card in selected_list:
         for card_label in card['labels']:
             cards.delete_label_color(card_label['color'], card['id'])
@@ -127,7 +142,7 @@ def label_cards(selected_list, APIKEY, TOKEN):
         if any(s in card['name'].lower() for s in EXAM_NAMES):
             cards.new_label(card['id'], EXAM_COLOR)
 
-        print(card['name'])
+        logging.info(card['name'])
 
 
 if __name__ == '__main__':
